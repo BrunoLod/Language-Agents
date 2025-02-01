@@ -1,61 +1,118 @@
 from typing import List
 
 from langchain.schema import Document
+from langchain_community.document_loaders import WebBaseLoader
 from langchain_community.document_loaders.base import BaseLoader
 from langchain_core.embeddings import Embeddings
 from langchain_core.language_models import BaseChatModel
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
-from langchain_core.vectorstores import VectorStore
-from langchain_text_splitters.base import TextSplitter
+from langchain_core.vectorstores import InMemoryVectorStore
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 
 class RagAgent():
-    """ 
     """
+    A Retrieval-Augmented Generation (RAG) agent that combines document retrieval with a language model 
+    to generate contextually relevant responses to user queries.
+
+    This agent is initialized with a language model (LLM), a system prompt, an embedding model, and a 
+    list of documents. It processes the documents by loading, splitting, and embedding them into a 
+    vector store for retrieval. The `run` method retrieves relevant document chunks based on the query 
+    and generates a response using the language model.
+
+    Attributes:
+        llm (BaseChatModel): The language model used for generating responses.
+        system_prompt (str): The initial prompt or instruction that guides the language model's behavior.
+        embedding (Embeddings): The embedding model used to convert documents into vector representations.
+        documents (List[Document]): A list of documents to be processed and used for retrieval.
+
+    Methods:
+        loader() -> List[Document]:
+            Loads the documents from the provided sources.
+
+        splitter() -> List[Document]:
+            Splits the loaded documents into smaller chunks for processing.
+
+        retriever() -> InMemoryVectorStore:
+            Converts the split documents into a vector store and returns a retriever for querying.
+
+        run(query: str) -> str:
+            Retrieves relevant document chunks based on the query and generates a response using the language model.
+    """
+
     def __init__(
             self, 
             llm: BaseChatModel, 
             system_prompt: str,
-            emebedding: Embeddings, 
-            retriever: VectorStore,
-            loader: BaseLoader,
-            splitter: TextSplitter            
+            embedding: Embeddings, 
+            documents: List[Document]
         ) -> None:
-        
+        """
+        Initializes the RagAgent with a language model, system prompt, embedding model, and documents.
+
+        Args:
+            llm (BaseChatModel): The language model to be used for generating responses.
+            system_prompt (str): The initial prompt or instruction that guides the language model's behavior.
+            embedding (Embeddings): The embedding model used to convert documents into vector representations.
+            documents (List[Document]): A list of documents to be processed and used for retrieval.
+        """
         self.llm           = llm
         self.system_prompt = system_prompt
-        self.embedding     = emebedding
-        self.retriever     = retriever
-        self.loader        = loader
-        self.splitter      = splitter
-
+        self.embedding     = embedding
+        self.documents     = documents
+        
     def loader(self) -> List[Document]:
-        """ 
         """
-        return self.loader.load()
+        Loads the documents from the provided sources using a web-based loader.
+
+        Returns:
+            List[Document]: A list of loaded documents.
+        """
+        loader = WebBaseLoader(self.documents)
+        return loader.load()
     
     def splitter(self) -> List[Document]:
-        """ 
         """
-        text_splitter = self.splitter
+        Splits the loaded documents into smaller chunks using a recursive text splitter.
+
+        Returns:
+            List[Document]: A list of document chunks.
+        """
+        text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size         = 500, 
+            chunk_overlap      = 50, 
+            length_function    = len,
+            separators         = ["", " ", ".", "\n", "\n\n"],
+            is_separator_regex = False
+        )
         return text_splitter.split_documents(self.loader())
     
-    def retriever(self) -> VectorStore: 
-        """ 
+    def retriever(self) -> InMemoryVectorStore: 
         """
+        Converts the split documents into a vector store and returns a retriever for querying.
 
-        vector_store = self.retriever.from_documents(
+        Returns:
+            InMemoryVectorStore: A retriever object for querying the vector store.
+        """
+        vector_store = InMemoryVectorStore.from_documents(
             self.splitter(), 
             self.embedding
         )
         return vector_store.as_retriever()
     
     def run(self, query: str) -> str: 
-        """ 
+        """
+        Retrieves relevant document chunks based on the query and generates a response using the language model.
+
+        Args:
+            query (str): The user input or query to be processed.
+
+        Returns:
+            str: The response generated by the language model, augmented with retrieved document context.
         """
         rag_chain = (
-            {"context": self.retriever(), "question": RunnablePassthrough()}
+            {"context": self.retriever(), "query": RunnablePassthrough()}
             | self.system_prompt
             | self.llm
             | StrOutputParser()
@@ -65,11 +122,8 @@ class RagAgent():
 if __name__=="__main__": #pragma: no-cover
 
     from chatbot_prompt.rag_agent_prompt import system_rag_prompt
-    from langchain_community.document_loaders import WebBaseLoader
-    from langchain_core.vectorstores import InMemoryVectorStore
     from langchain_groq import ChatGroq
     from langchain_huggingface.embeddings import HuggingFaceEmbeddings
-    from langchain_text_splitters import RecursiveCharacterTextSplitter
 
     llm = ChatGroq(
         model = "llama3-70b-8192", 
@@ -81,25 +135,13 @@ if __name__=="__main__": #pragma: no-cover
         model_name = "sentence-transformers/all-mpnet-base-v2"
     )
 
-    text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size         = 500, 
-        chunk_overlap      = 50, 
-        length_function    = len,
-        separators         = ["", " ", ".", "\n", "\n\n"],
-        is_separator_regex = False
-    )
-
     url = "https://en-m-wikipedia-org.translate.goog/wiki/Dark_wave?_x_tr_sl=en&_x_tr_tl=pt&_x_tr_hl=pt&_x_tr_pto=tc"
-
-    loader = WebBaseLoader(url)
 
     rag_agent = RagAgent(
         llm           = llm, 
         system_prompt = system_rag_prompt, 
         embedding     = embedding, 
-        retriever     = InMemoryVectorStore, 
-        loader        = loader, 
-        splitter      = text_splitter
+        documents     = url
     )
 
     print("Olá! Eu sou a Lily, prazer. O que deseja conversar, caro(a) morceguinho(a) ?")
