@@ -49,8 +49,7 @@ class SimpleAgent():
     
 if __name__=="__main__": #pragma: no-cover
 
-    from bots_with_langchain.chatbot_prompt.simple_agent_prompt import \
-        system_prompt
+    from chatbot_prompt.simple_agent_prompt import system_prompt
     from langchain_groq import ChatGroq
 
     llm = ChatGroq(
