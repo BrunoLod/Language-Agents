@@ -1,4 +1,9 @@
+pypdf
+pytest
 langchain
 langchain-groq==0.2.2
 langchain-core==0.3.28
 langchain-community
+langchain-huggingface
+beautifulsoup4
+sentence-transformers

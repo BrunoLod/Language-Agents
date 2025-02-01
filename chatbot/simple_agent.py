@@ -63,14 +63,15 @@ if __name__=="__main__": #pragma: no-cover
         system_prompt = system_prompt   
     )
 
+    print("Olá! Eu sou a Lily, prazer. O que deseja conversar, caro(a) morceguinho(a) ?")
     while True: 
 
-        user_input = input("Olá, eu sou a Lily! Sobre o que quer conversar, morceguinho ?")
+        user_input = input("Palavras soltas: ")
         if user_input.lower() in ["sair", "exit"]: 
             print("Até mais! Trombamos por aí depois...")
             break
         try:
             response = simple_agent.run(query=user_input)
-            print(f"Lility: {response}")
+            print(f"Lily: {response}")
         except Exception as e: 
             print(f"Erro ao processar a mensagem {e}")
