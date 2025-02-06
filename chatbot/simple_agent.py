@@ -55,7 +55,7 @@ if __name__=="__main__": #pragma: no-cover
     llm = ChatGroq(
         model="llama3-70b-8192", 
         temperature = 0.5, 
-        api_key = "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"  
+        api_key = "your-api-key"  
     )
 
     simple_agent = SimpleAgent(
