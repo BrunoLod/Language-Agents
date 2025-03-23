@@ -1,0 +1,15 @@
+# Ignorar o ambiente virtual do Python
+venv/
+.env/
+env/
+
+# Ignorar pacotes instalados no projeto
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignorar logs, caches e arquivos temporários
+*.log
+.DS_Store
+Thumbs.db

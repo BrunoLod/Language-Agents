@@ -6,7 +6,7 @@ from langchain.chains.history_aware_retriever import \
 from langchain.chains.retrieval import create_retrieval_chain
 from langchain.schema import Document
 from langchain_community.chat_message_histories import ChatMessageHistory
-from langchain_community.document_loaders import WebBaseLoader
+from langchain_community.document_loaders import PyPDFLoader
 from langchain_core.chat_history import BaseChatMessageHistory
 from langchain_core.embeddings import Embeddings
 from langchain_core.language_models import BaseChatModel
@@ -17,8 +17,10 @@ from langchain_core.vectorstores import InMemoryVectorStore
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 
-class ConversationalRag():
-    """ 
+class ConversationalRag:
+    """
+    Conversational RAG (Retrieval-Augmented Generation) system for handling 
+    conversational queries with context-aware retrieval.
     """
     def __init__(
             self, 
@@ -29,9 +31,18 @@ class ConversationalRag():
             chat_history: ChatMessageHistory,
             documents: List[Document]
         ) -> None:
-        """ 
         """
-        self.llm                   = llm, 
+        Initializes the ConversationalRag instance.
+
+        Args:
+            llm (BaseChatModel): The language model used for response generation.
+            system_message (str): The system-level instruction message.
+            contextualize_message (str): The message to provide context-aware queries.
+            embedding (Embeddings): The embedding model used for document retrieval.
+            chat_history (ChatMessageHistory): The chat history manager.
+            documents (List[Document]): A list of documents to be processed and retrieved.
+        """
+        self.llm                   = llm 
         self.system_message        = system_message
         self.contextualize_message = contextualize_message
         self.embedding             = embedding
@@ -47,7 +58,7 @@ class ConversationalRag():
         Returns:
             List[Document]: A list of loaded documents.
         """
-        loader = WebBaseLoader(self.documents)
+        loader = PyPDFLoader(self.documents)
         return loader.load()
     
     def splitter(self) -> List[Document]:
@@ -77,20 +88,25 @@ class ConversationalRag():
             self.splitter(), 
             self.embedding
         )
-
         return vector_store.as_retriever()
 
     def get_session_history(self, session_id: str) -> BaseChatMessageHistory: 
         """ 
-        """
+        Retrieves or initializes the chat history for a given session.
+
+        Args:
+            session_id (str): The unique identifier for the chat session.
+        
+        Returns:
+            BaseChatMessageHistory: The chat history associated with the session.
+        """ 
         if session_id not in self.store: 
             self.store[session_id] = self.chat_history
-
         return self.store[session_id]
 
-
-    def __format_prompt(self) -> ChatPromptTemplate: 
+    def __format_prompt(self) -> None: 
         """ 
+        Formats the system and contextualization prompts for structured conversation handling.
         """ 
         self.__contextualize_prompt = ChatPromptTemplate(
             [
@@ -110,7 +126,11 @@ class ConversationalRag():
 
     def buid_conversational_chain(self) -> Runnable:
         """ 
-        """
+        Builds the conversational RAG chain by combining retrieval and response generation.
+
+        Returns:
+            Runnable: A runnable chain for processing conversational queries.
+        """ 
         history_aware_retriever = create_history_aware_retriever(
             self.llm, 
             self.retriever(), 
@@ -129,9 +149,16 @@ class ConversationalRag():
 
         return rag_chain
 
-    def run(self, query: str):
+    def run(self, query: str) -> str:
         """ 
-        """
+        Executes the RAG pipeline for a given query and returns the generated response.
+
+        Args:
+            query (str): The user input query.
+        
+        Returns:
+            str: The generated response from the conversational model.
+        """ 
         conversational_rag_chain = RunnableWithMessageHistory(
             self.buid_conversational_chain(), 
             self.get_session_history, 
@@ -141,7 +168,7 @@ class ConversationalRag():
         )
 
         response = conversational_rag_chain.invoke(
-            {"input", query}, 
+            {"input": query}, 
             config={
                 "configurable": {"session_id": 935}
             }
@@ -150,8 +177,7 @@ class ConversationalRag():
         return response
     
 if __name__=="__main__": 
-    """ 
-    """
+    
     from langchain_community.chat_message_histories import ChatMessageHistory
     from langchain_groq import ChatGroq
     from langchain_huggingface.embeddings import HuggingFaceEmbeddings
@@ -172,7 +198,7 @@ if __name__=="__main__":
 
     chat_history = ChatMessageHistory()
 
-    url = "https://en-m-wikipedia-org.translate.goog/wiki/Dark_wave?_x_tr_sl=en&_x_tr_tl=pt&_x_tr_hl=pt&_x_tr_pto=tc"
+    article = "data/Int J Mental Health Nurs - 2023 - Higgins - Artificial intelligence  AI  and machine learning  ML  based decision support.pdf"
 
     conversational_rag = ConversationalRag(
         llm                   = llm, 
@@ -180,7 +206,7 @@ if __name__=="__main__":
         contextualize_message = contextualize_message,
         embedding             = embedding, 
         chat_history          = chat_history,
-        documents             = url
+        documents             = article
     )
     
     print("Olá! Eu sou a Lily, prazer. O que deseja conversar, caro(a) morceguinho(a) ?")
