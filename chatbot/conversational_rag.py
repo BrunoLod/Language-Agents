@@ -16,6 +16,7 @@ from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_core.vectorstores import InMemoryVectorStore
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
+# Naive example for a conversational RAG
 
 class ConversationalRag:
     """
@@ -178,13 +179,11 @@ class ConversationalRag:
     
 if __name__=="__main__": 
     
+    from chatbot_prompt.contextualize_message import contextualize_message
+    from chatbot_prompt.system_message import system_message
     from langchain_community.chat_message_histories import ChatMessageHistory
     from langchain_groq import ChatGroq
     from langchain_huggingface.embeddings import HuggingFaceEmbeddings
-
-    from chatbot.chatbot_prompt.contextualize_message import \
-        contextualize_message
-    from chatbot.chatbot_prompt.system_message import system_message
 
     llm = ChatGroq(
         model = "llama3-70b-8192", 
@@ -198,7 +197,7 @@ if __name__=="__main__":
 
     chat_history = ChatMessageHistory()
 
-    article = "data/Int J Mental Health Nurs - 2023 - Higgins - Artificial intelligence  AI  and machine learning  ML  based decision support.pdf"
+    article = "../data/Int J Mental Health Nurs - 2023 - Higgins - Artificial intelligence  AI  and machine learning  ML  based decision support.pdf"
 
     conversational_rag = ConversationalRag(
         llm                   = llm, 
