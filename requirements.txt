@@ -1,9 +1,16 @@
 pypdf
+pandas
 pytest
+duckdb==1.2.0
+ipython
+pyarrow
 langchain
 langchain-groq==0.2.2
 langchain-core==0.3.28
 langchain-community
 langchain-huggingface
+langchain-ollama==0.3.0
+langgraph
 beautifulsoup4
 sentence-transformers
+fastparquet
