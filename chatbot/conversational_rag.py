@@ -179,16 +179,18 @@ class ConversationalRag:
     
 if __name__=="__main__": 
     
-    from chatbot_prompt.contextualize_message import contextualize_message
     from chatbot_prompt.system_message import system_message
     from langchain_community.chat_message_histories import ChatMessageHistory
     from langchain_groq import ChatGroq
     from langchain_huggingface.embeddings import HuggingFaceEmbeddings
 
+    from chatbot.notebook_chatbot.contextualize_message import \
+        contextualize_message
+
     llm = ChatGroq(
         model = "llama3-70b-8192", 
         temperature = 0.5, 
-        api_key = "your-api-key"  
+        api_key = "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"  
     )
 
     embedding = HuggingFaceEmbeddings(
